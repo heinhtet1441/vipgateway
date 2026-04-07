@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIPGATEWAY — Payment QR</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--s1:#141414;--s2:#1c1c1c;--s3:#242424;
+  --border:#2a2a2a;--border2:#383838;
+  --text:#f2f2f2;--muted:#666;--dim:#444;
+  --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --accent:#e8ff47;
+}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.shell{width:100%;max-width:1000px;display:grid;grid-template-columns:1fr 400px;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+@media(max-width:780px){.shell{grid-template-columns:1fr;max-width:440px}}
+.top-bar{grid-column:1/-1;background:var(--s2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;font-size:11px;font-family:'JetBrains Mono',monospace}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.top-bar-txt{color:var(--muted)}
+.top-bar-url{color:var(--dim)}
+.left{background:var(--s1);padding:28px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 2s ease-in-out infinite}
+.brand-name{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+.lbl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:block}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.field input,.field select{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.token-wrap{position:relative;margin-bottom:15px}
+.token-wrap label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.token-wrap input{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:9px 44px 9px 12px;outline:none;transition:border-color .2s}
+.token-wrap input:focus{border-color:var(--accent)}
+.tok-btn{position:absolute;right:10px;top:30px;cursor:pointer;color:var(--muted);font-size:11px;user-select:none;font-family:'Instrument Sans',sans-serif}
+.tok-btn:hover{color:var(--text)}
+.btn-load{padding:6px 14px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;margin-bottom:12px;font-family:'Instrument Sans',sans-serif}
+.btn-load:hover{background:var(--s2);color:var(--text);border-color:var(--dim)}
+.ch-card{background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.ch-card:hover{border-color:var(--dim)}
+.ch-card.selected{border-color:var(--accent);background:var(--s3)}
+.ch-badge{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;flex-shrink:0}
+.ch-badge.kbz{background:rgba(0,163,224,.15);color:#00a3e0}
+.ch-badge.wave{background:rgba(255,107,53,.15);color:#ff6b35}
+.ch-info{flex:1;min-width:0}
+.ch-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-phone{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.ch-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ch-dot.online{background:var(--green)}.ch-dot.busy{background:var(--yellow)}.ch-dot.offline,.ch-dot.error{background:var(--red)}
+.ch-msg{text-align:center;padding:16px;font-size:12px;color:var(--muted)}
+.btn-pay{width:100%;padding:13px;background:var(--accent);color:#000;border:none;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;margin-top:6px}
+.btn-pay:hover{opacity:.88;transform:translateY(-1px)}.btn-pay:active{transform:scale(.98)}.btn-pay:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.err{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--red);margin-top:10px;display:none;word-break:break-all;line-height:1.6}
+.err.show{display:block}
+.right{background:var(--s1);display:flex;flex-direction:column;border-left:1px solid var(--border)}
+.right-top{padding:28px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:340px}
+.idle{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.idle-icon{width:64px;height:64px;border:1.5px dashed var(--border2);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.idle-icon svg{width:26px;height:26px;opacity:.25}
+.idle-txt{font-size:12px;color:var(--muted);line-height:1.6}
+.qr-area{display:none;flex-direction:column;align-items:center;width:100%}
+.qr-frame{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px}
+.qr-frame img{width:196px;height:196px;display:block}
+.timer-track{width:196px;height:3px;background:var(--s3);border-radius:2px;margin-bottom:14px;overflow:hidden}
+.timer-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s linear}
+.mpay-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;margin-bottom:5px}
+.amt-big{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:10px}
+.amt-big em{font-size:13px;font-weight:500;color:var(--muted);font-style:normal}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.pill.processing{background:rgba(245,158,11,.1);color:var(--yellow)}
+.pill.completed{background:rgba(34,197,94,.1);color:var(--green)}
+.pill.failed{background:rgba(239,68,68,.1);color:var(--red)}
+.pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.pulse{animation:pd 1.2s ease-in-out infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.25}}
+.right-bottom{border-top:1px solid var(--border);padding:16px 24px;display:flex;flex-direction:column;gap:7px}
+.mr{display:flex;justify-content:space-between;font-size:12px}
+.mr .k{color:var(--muted)}.mr .v{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-new{width:100%;padding:9px;margin-top:6px;background:transparent;border:1px solid var(--border2);border-radius:7px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:none;font-family:'Instrument Sans',sans-serif}
+.btn-new:hover{background:var(--s2);color:var(--text)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top-bar">
+    <div class="conn-dot"></div>
+    <span class="top-bar-txt">VIPGATEWAY API</span>
+    <span class="top-bar-url">· staging.vipgateway.net</span>
+  </div>
+
+  <div class="left">
+    <div class="brand"><div class="brand-dot"></div><div class="brand-name">VIPGATEWAY</div></div>
+
+    <div class="token-wrap">
+      <label>API Token</label>
+      <input type="password" id="f-token" placeholder="m2pay_live_..." autocomplete="off">
+      <span class="tok-btn" onclick="toggleTok()">show</span>
+    </div>
+    <button class="btn-load" onclick="loadChannels()">↻ Load Channels</button>
+
+    <span class="lbl">Channel</span>
+    <div id="ch-wrap"><div class="ch-msg">Enter token and click Load Channels</div></div>
+
+    <div class="row2" style="margin-top:18px">
+      <div class="field"><label>Amount (MMK)</label><input type="number" id="f-amount" placeholder="5000" min="100" max="5000000" oninput="validate()"></div>
+      <div class="field"><label>Timeout (sec)</label><input type="number" id="f-timeout" value="300" min="60" max="300"></div>
+    </div>
+
+    <span class="lbl">Customer</span>
+    <div class="field"><label>Phone *</label><input type="text" id="f-phone" placeholder="09123456789" maxlength="11" oninput="validate()"></div>
+    <div class="field"><label>Name <span id="name-hint" style="color:var(--muted)">(optional)</span></label><input type="text" id="f-name" placeholder="Aung Aung"></div>
+    <div class="field"><label>Notes / Reference <span id="notes-hint" style="color:var(--muted)">(optional)</span></label><input type="text" id="f-notes" placeholder="ORDER-001"></div>
+
+    <button class="btn-pay" id="btn-pay" onclick="createPayment()" disabled>Generate QR</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="right">
+    <div class="right-top">
+      <div class="idle" id="idle">
+        <div class="idle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg></div>
+        <div class="idle-txt">Select a channel and fill the form<br>to generate a payment QR</div>
+      </div>
+      <div class="qr-area" id="qr-area">
+        <div class="qr-frame"><img id="qr-img" src="" alt="QR Code"></div>
+        <div class="timer-track"><div class="timer-fill" id="t-fill" style="width:100%"></div></div>
+        <div class="mpay-id" id="qr-mpay">—</div>
+        <div class="amt-big" id="qr-amt">— <em>MMK</em></div>
+        <div class="pill processing" id="qr-pill"><div class="pdot pulse"></div><span id="pill-txt">Processing</span></div>
+      </div>
+    </div>
+    <div class="right-bottom">
+      <div class="mr"><span class="k">Channel</span><span class="v" id="m-ch">—</span></div>
+      <div class="mr"><span class="k">Customer</span><span class="v" id="m-cu">—</span></div>
+      <div class="mr"><span class="k">Reference</span><span class="v" id="m-ref">—</span></div>
+      <div class="mr"><span class="k">Expires</span><span class="v" id="m-exp">—</span></div>
+      <div class="mr"><span class="k">Payer</span><span class="v" id="m-pay">—</span></div>
+      <button class="btn-new" id="btn-new" onclick="reset()">+ New payment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let channels=[], selCh=null, pollT=null, cntT=null;
+
+function tok(){return document.getElementById('f-token').value.trim()}
+function authH(){return{'X-Token':tok(),'Content-Type':'application/json'}}
+function showErr(m){const e=document.getElementById('err');e.innerHTML=m;e.classList.add('show')}
+function hideErr(){document.getElementById('err').classList.remove('show')}
+function toggleTok(){const i=document.getElementById('f-token'),b=document.querySelector('.tok-btn');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'show':'hide'}
+
+async function loadChannels(){
+  if(!tok()){showErr('Enter your API token first');return}
+  hideErr();
+  const w=document.getElementById('ch-wrap');
+  w.innerHTML='<div class="ch-msg">Loading…</div>';
+  selCh=null;validate();
+  try{
+    const r=await fetch('/api/channels',{headers:authH()});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.message||j.error||'HTTP '+r.status);
+    channels=j.data||[];
+    if(!channels.length){w.innerHTML='<div class="ch-msg">No channels found</div>';return}
+    w.innerHTML=channels.map(c=>{
+      const pv=c.wallet_provider==='KBZPAY'?'kbz':'wave';
+      const lb=c.wallet_provider==='KBZPAY'?'KBZ':'WAVE';
+      const st=(c.status||'offline').toLowerCase();
+      return`<div class="ch-card" data-id="${c.id}" onclick="selChannel('${c.id}')">
+        <span class="ch-badge ${pv}">${lb}</span>
+        <div class="ch-info"><div class="ch-name">${c.name}</div><div class="ch-phone">${c.phone}</div></div>
+        <div class="ch-dot ${st}"></div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    w.innerHTML=`<div class="ch-msg" style="color:var(--red)">${e.message}</div>`;
+    showErr('Failed to load channels: '+e.message);
+  }
+}
+
+function selChannel(id){
+  selCh=channels.find(c=>c.id===id)||null;
+  document.querySelectorAll('.ch-card').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
+  const isKBZ=selCh&&selCh.wallet_provider==='KBZPAY';
+  const isWave=selCh&&selCh.wallet_provider==='WAVEPAY';
+  document.getElementById('notes-hint').textContent=isKBZ?'* required':'(optional)';
+  document.getElementById('notes-hint').style.color=isKBZ?'var(--red)':'var(--muted)';
+  document.getElementById('name-hint').textContent=isWave?'* required':'(optional)';
+  document.getElementById('name-hint').style.color=isWave?'var(--red)':'var(--muted)';
+  validate();
+}
+
+function validate(){
+  const ok=selCh&&document.getElementById('f-amount').value&&document.getElementById('f-phone').value&&tok();
+  document.getElementById('btn-pay').disabled=!ok;
+}
+
+async function createPayment(){
+  hideErr();
+  const amount=parseInt(document.getElementById('f-amount').value);
+  const phone=document.getElementById('f-phone').value.trim();
+  const name=document.getElementById('f-name').value.trim();
+  const notes=document.getElementById('f-notes').value.trim();
+  const timeout=Math.min(300,Math.max(60,parseInt(document.getElementById('f-timeout').value)||300));
+  if(!selCh){showErr('Select a channel');return}
+  if(!amount||amount<100){showErr('Minimum 100 MMK');return}
+  if(!phone){showErr('Phone is required');return}
+  if(selCh.wallet_provider==='KBZPAY'&&!notes){showErr('Notes required for KBZPay');return}
+  if(selCh.wallet_provider==='WAVEPAY'&&!name){showErr('Name required for WavePay');return}
+  const btn=document.getElementById('btn-pay');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Generating…';
+  const body={amount,channel_id:selCh.id,customer_phone:phone,timeout_seconds:timeout};
+  if(name)body.customer_name=name;
+  if(notes)body.notes=notes;
+  try{
+    const r=await fetch('/api/payments',{method:'POST',headers:authH(),body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.message||j.error||'HTTP '+r.status);
+    showQR(j,timeout);startPoll(j.id,timeout);startCountdown(timeout);
+  }catch(e){showErr('Error: '+e.message);btn.disabled=false;btn.textContent='Generate QR'}
+}
+
+function showQR(p,timeout){
+  document.getElementById('idle').style.display='none';
+  const qa=document.getElementById('qr-area');qa.style.display='flex';
+  document.getElementById('qr-img').src='data:image/png;base64,'+p.qr_image;
+  document.getElementById('qr-mpay').textContent=p.mpay_id||'';
+  document.getElementById('qr-amt').innerHTML=parseInt(p.amount).toLocaleString()+' <em>MMK</em>';
+  setPill('processing');
+  document.getElementById('t-fill').style.width='100%';
+  document.getElementById('m-ch').textContent=(p.channel_name||selCh.name)+(p.channel_phone?' · '+p.channel_phone:'');
+  document.getElementById('m-cu').textContent=p.customer_phone||'—';
+  document.getElementById('m-ref').textContent=p.mpay_id||'—';
+  document.getElementById('m-exp').textContent=p.expires_at?new Date(p.expires_at).toLocaleTimeString():'—';
+  document.getElementById('m-pay').textContent='Waiting…';
+  document.getElementById('btn-pay').style.display='none';
+  document.getElementById('btn-new').style.display='block';
+}
+
+function setPill(s){
+  const p=document.getElementById('qr-pill'),d=p.querySelector('.pdot');
+  p.className='pill '+s;d.className='pdot'+(s==='processing'?' pulse':'');
+  document.getElementById('pill-txt').textContent=s.charAt(0).toUpperCase()+s.slice(1);
+}
+
+function startPoll(id,timeout){
+  let elapsed=0;
+  pollT=setInterval(async()=>{
+    elapsed+=5;
+    try{
+      const r=await fetch('/api/payments/'+id,{headers:authH()});
+      const j=await r.json();
+      if(j.status==='COMPLETED'){
+        clearInterval(pollT);clearInterval(cntT);setPill('completed');
+        document.getElementById('t-fill').style.width='0%';
+        document.getElementById('m-pay').textContent=(j.payer_name||'')+(j.payer_phone?' · '+j.payer_phone:'')||'—';
+      }else if(j.status==='FAILED'){clearInterval(pollT);clearInterval(cntT);setPill('failed')}
+    }catch{}
+    if(elapsed>=timeout+15){clearInterval(pollT);setPill('failed')}
+  },5000);
+}
+
+function startCountdown(timeout){
+  let rem=timeout;
+  cntT=setInterval(()=>{rem--;document.getElementById('t-fill').style.width=(rem/timeout*100)+'%';if(rem<=0)clearInterval(cntT)},1000);
+}
+
+function reset(){
+  clearInterval(pollT);clearInterval(cntT);
+  document.getElementById('idle').style.display='';document.getElementById('qr-area').style.display='none';
+  document.getElementById('btn-pay').style.display='';document.getElementById('btn-pay').disabled=false;
+  document.getElementById('btn-pay').textContent='Generate QR';document.getElementById('btn-new').style.display='none';
+  document.getElementById('t-fill').style.width='100%';document.getElementById('m-pay').textContent='—';
+  hideErr();selCh=null;document.querySelectorAll('.ch-card').forEach(el=>el.classList.remove('selected'));validate();
+}
+
+document.getElementById('f-token').addEventListener('input',validate);
+document.getElementById('f-token').addEventListener('keydown',e=>{if(e.key==='Enter')loadChannels()});
+</script>
+</body>
+</html>
