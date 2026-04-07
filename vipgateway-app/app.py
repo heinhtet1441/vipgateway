@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-API_BASE = "https://api.staging.vipgateway.net"
+API_BASE = "https://api.vipgateway.net"
 
 HTML = open("templates/index.html").read()
 
