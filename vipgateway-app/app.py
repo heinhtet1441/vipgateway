@@ -1,15 +1,13 @@
-from flask import Flask, request, jsonify, render_template_string
-import requests
+from flask import Flask, request, jsonify, render_template
+import requests, os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 
 API_BASE = "https://api.staging.vipgateway.net"
 
-HTML = open("templates/index.html").read()
-
 @app.route("/")
 def index():
-    return render_template_string(HTML)
+    return render_template("index.html")
 
 @app.route("/api/channels")
 def channels():
@@ -20,7 +18,11 @@ def channels():
             headers={"Authorization": f"Bearer {token}"},
             timeout=10
         )
-        return jsonify(r.json()), r.status_code
+        # Return raw text for debugging
+        try:
+            return jsonify(r.json()), r.status_code
+        except Exception:
+            return jsonify({"error": f"HTTP {r.status_code}", "raw": r.text[:500]}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -30,14 +32,14 @@ def create_payment():
     try:
         r = requests.post(
             f"{API_BASE}/v1/payments",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            },
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json=request.get_json(),
             timeout=15
         )
-        return jsonify(r.json()), r.status_code
+        try:
+            return jsonify(r.json()), r.status_code
+        except Exception:
+            return jsonify({"error": f"HTTP {r.status_code}", "raw": r.text[:500]}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -50,20 +52,10 @@ def get_payment(payment_id):
             headers={"Authorization": f"Bearer {token}"},
             timeout=10
         )
-        return jsonify(r.json()), r.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/payments/<payment_id>/cancel", methods=["POST"])
-def cancel_payment(payment_id):
-    token = request.headers.get("X-Token", "")
-    try:
-        r = requests.post(
-            f"{API_BASE}/v1/payments/{payment_id}/cancel",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10
-        )
-        return jsonify(r.json()), r.status_code
+        try:
+            return jsonify(r.json()), r.status_code
+        except Exception:
+            return jsonify({"error": f"HTTP {r.status_code}", "raw": r.text[:500]}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
